@@ -8,6 +8,6 @@ RUN apk add --no-cache \
     apache-ant \
     openjdk8 \
     zlib-dev zstd-dev \
-    rsync ccache \
+    cmake rsync ccache \
     wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev \
     libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev
