@@ -158,4 +158,6 @@ COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
-RUN ln -s /usr/share/gdal/libsos/*.so /usr/local/tomcat/native-jni-lib/
+RUN (for so in \
+     /usr/share/gdal/libso/*.so; \
+     do ln -s $so  /usr/local/tomcat/native-jni-lib/; done)
