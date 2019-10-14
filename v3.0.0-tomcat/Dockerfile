@@ -92,7 +92,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-hide-internal-symbols \
     --with-java=/usr/lib/jvm/java-1.8-openjdk \
     --with-proj=/usr \
-    --with-fgdb=/gdal/FileGDB_API-64/lib \
+    --with-fgdb=/gdal/FileGDB_API-64 \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --enable-lto \
