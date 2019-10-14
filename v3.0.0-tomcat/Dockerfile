@@ -84,11 +84,14 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
+    && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64.tar.gz -O - \
+        | tar xz -C filegdb --strip-components=1 \
     && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-java=/usr/lib/jvm/java-1.8-openjdk \
     --with-proj=/usr \
+    --with-fgdb=gdal/filegdb/FileGDB_API-64 \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --enable-lto \
@@ -161,3 +164,4 @@ COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN (for so in \
      /usr/share/gdal/libso/*.so; \
      do ln -s $so  /usr/local/tomcat/native-jni-lib/; done)
+CMD gdalinfo --version && gdalinfo --formats && ogrinfo --formats
