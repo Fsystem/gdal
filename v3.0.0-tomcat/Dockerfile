@@ -82,16 +82,17 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         ccache -M 1G; \
     fi \
     && mkdir gdal \
+    && mkdir /gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64.tar.gz -O - \
-        | tar xz -C gdal --strip-components=1 \
+        | tar xz -C /gdal --strip-components=1 \
     && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-java=/usr/lib/jvm/java-1.8-openjdk \
     --with-proj=/usr \
-    --with-fgdb=../FileGDB_API-64 \
+    --with-fgdb=/gdal/FileGDB_API-64 \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --enable-lto \
