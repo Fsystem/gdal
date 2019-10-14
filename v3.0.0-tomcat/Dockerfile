@@ -81,17 +81,18 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export CXX="ccache g++"; \
         ccache -M 1G; \
     fi \
-    && mkdir gdal fgdb\
+    && mkdir gdal \
+    && mkdir /fgdb \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64.tar.gz -O - \
-        | tar xz -C fgdb --strip-components=1 \
+        | tar xz -C /fgdb --strip-components=1 \
     && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-java=/usr/lib/jvm/java-1.8-openjdk \
     --with-proj=/usr \
-    --with-fgdb=../fgdb \
+    --with-fgdb=/fgdb \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --enable-lto \
@@ -101,7 +102,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && cd ../.. \
     && make install DESTDIR="/build" \
     && mv swig/java /build/usr/share/gdal/libso \
-    && cp ../fgdb/lib/*.so /build/usr/share/gdal/libso \
+    && cp /fgdb/lib/*.so /build/usr/share/gdal/libso \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
