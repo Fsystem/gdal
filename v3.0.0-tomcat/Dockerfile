@@ -105,7 +105,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
-    && export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+    && export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
