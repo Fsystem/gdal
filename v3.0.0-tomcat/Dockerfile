@@ -31,8 +31,6 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
-RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends rsync ccache
 ARG RSYNC_REMOTE
 
 # Build PROJ
@@ -67,9 +65,9 @@ RUN mkdir proj \
     && cd .. \
     && rm -rf proj \
     && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
-    && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
+    && PROJ_SO_FIRST=$(echo $PROJ_SO | a${PROJ_SO}wk 'BEGIN {FS="."} {print $1}') \
     && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
+    && ln -s libinternalproj.so.${PROJ_SO}${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
     && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
@@ -107,6 +105,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
+    && export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
@@ -116,8 +115,11 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     && make -j$(nproc) \
+    && cd swig/java \
+    && make -j$(nproc) \
+    && cd ../.. \
     && make install DESTDIR="/build" \
-    && mkdir /build/usr/share/gdal/libso \
+    && mv swig/java /build/usr/share/gdal/libso \
     && cp /fgdb/lib/*.so /build/usr/share/gdal/libso \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
@@ -130,16 +132,11 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && cd ../.. \
     && rm -rf gdal \
-    && mkdir -p /build_gdal_java/usr/lib \
-    && mkdir -p /build_gdal_java/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/java            /build_gdal_java/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
-    && mv /build/usr/bin/*.jar               /build_gdal_java/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_java/usr/lib/java/bin/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
@@ -175,7 +172,6 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/li
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_java/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN (for so in \
      /usr/share/gdal/libso/*.so; \
