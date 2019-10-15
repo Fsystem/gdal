@@ -7,6 +7,7 @@ RUN apt-get update -y \
             software-properties-common build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev libsqlite3-dev pkg-config sqlite3 \
+            swig apache-ant \
             python3-dev python3-numpy \
             libjpeg-dev libgeos-dev \
             curl libcurl4-gnutls-dev libexpat-dev libxerces-c-dev \
