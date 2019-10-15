@@ -11,7 +11,7 @@ RUN apt-get update -y \
             libjpeg-dev libgeos-dev \
             curl libcurl4-gnutls-dev libexpat-dev libxerces-c-dev \
             libwebp-dev \
-            libzstd1-dev bash zip curl \
+            libzstd-dev bash zip curl \
             libpq-dev libssl-dev \
             autoconf automake sqlite3 bash-completion \
             rsync ccache

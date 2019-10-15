@@ -1,8 +1,12 @@
 
-FROM haies/gdal:base as builder
+ARG PROJ_INSTALL_PREFIX=/usr/local
+
+FROM haies/gdal:base-debian as builder
 
 MAINTAINER haies 
 
+# Build openjpeg
+ARG OPENJPEG_VERSION=2.3.1
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
@@ -19,13 +23,16 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
     ); fi
 
+ARG PROJ_INSTALL_PREFIX
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
-    mkdir -p /build_projgrids/usr/share/proj \
+    mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
+    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
+RUN apt-get update -y \
+    && apt-get install -y --fix-missing --no-install-recommends rsync ccache
 ARG RSYNC_REMOTE
 
 # Build PROJ
@@ -44,10 +51,10 @@ RUN mkdir proj \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
-    && ./configure --prefix=/usr --disable-static --enable-lto \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
+        ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
     && make -j$(nproc) \
-    && make install \
-    && make install DESTDIR="/build_proj" \
+    && make install DESTDIR="/build" \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -59,16 +66,16 @@ RUN mkdir proj \
     fi \
     && cd .. \
     && rm -rf proj \
-    && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
+    && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
+    && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
+    && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
+    && strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
-# install glibc
-RUN apk --no-cache add ca-certificates wget \
-    && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-    && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk \
-    && apk add glibc-2.25-r0.apk \
-    && rm /lib64/* \ 
-    && cp /usr/glibc-compat/lib/*so* /lib64
 # Build GDAL
 ARG GDAL_VERSION=v3.0.0
 ARG GDAL_RELEASE_DATE
@@ -80,14 +87,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
-        echo "Finished"; \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
-        ccache -M 1G; \
-    fi \
     && mkdir gdal \
     && mkdir /fgdb \
     && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
@@ -95,14 +94,28 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64.tar.gz -O - \
         | tar xz -C /fgdb --strip-components=1 \
     && cd gdal/gdal \
+    && if test "${RSYNC_REMOTE}" != ""; then \
+        echo "Downloading cache..."; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        echo "Finished"; \
+        # Little trick to avoid issues with Python bindings
+        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
+        chmod +x ccache_gcc.sh; \
+        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
+        chmod +x ccache_g++.sh; \
+        export CC=$PWD/ccache_gcc.sh; \
+        export CXX=$PWD/ccache_g++.sh; \
+        ccache -M 1G; \
+    fi \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
-    --with-java=/usr/lib/jvm/java-1.8-openjdk \
-    --with-proj=/usr \
+    --with-jpeg12 \
+    --with-java=/usr/local/openjdk-8 \
+    --with-proj=/build/usr/local \
     --with-fgdb=/fgdb \
+    --with-webp --with-proj=/build${PROJ_INSTALL_PREFIX} \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    --enable-lto \
     && make -j$(nproc) \
     && cd swig/java \
     && make -j$(nproc) \
@@ -121,56 +134,57 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && cd ../.. \
     && rm -rf gdal \
+    && mkdir -p /build_gdal_python/usr/lib \
+    && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
+    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
+    && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    # Remove resource files of uncompiled drivers
-    && (for i in \
-            # BAG driver
-            /build/usr/share/gdal/bag*.xml \
-            # unused
-            /build/usr/share/gdal/*.svg \
-            # unused
-            /build/usr/share/gdal/*.png \
-            # GMLAS driver
-            /build/usr/share/gdal/gmlas* \
-            # netCDF driver
-            /build/usr/share/gdal/netcdf_config.xsd \
-       ;do rm $i; done)
+    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
-FROM tomcat:8.5.41-jre8-alpine as runner
+FROM tomcat:8.5-jdk8-openjdk as runner
 
 RUN date
 
-RUN apk add --no-cache \
-        libstdc++ \
-        sqlite-libs \
-        libcurl \
-        zlib zstd-libs\
-        libjpeg-turbo libpng openjpeg libwebp expat libpq \
-    # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
-    && rm -f /usr/lib/libturbojpeg.so* \
-    # Only libwebp.so is used by GDAL
-    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
+# PROJ dependencies
+RUN apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
+        libsqlite3-0 \
+        curl unzip
+
+# GDAL dependencies
+RUN apt-get update -y; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
+        python3-numpy libpython3.6 \
+        libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
+        libcurl4 libexpat1 \
+        libxerces-c3.2 \
+        libwebp6 \
+        libzstd1 bash libpq5 libssl1.1
 
 # Order layers starting with less frequently varying ones
-#COPY --from=builder  /build_thirdparty/usr/ /usr/
+COPY --from=builder  /build_thirdparty/usr/ /usr/
 
 COPY --from=builder  /build_projgrids/usr/ /usr/
 
-COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
-COPY --from=builder  /build_proj/usr/include/ /usr/include/
-COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
-COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
+ARG PROJ_INSTALL_PREFIX
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
+COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
+COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN (for so in \
      /usr/share/gdal/libso/*.so; \
      do ln -s $so  /usr/local/tomcat/native-jni-lib/; done)
+
+RUN ldconfig
 CMD gdalinfo --version && gdalinfo --formats && ogrinfo --formats
