@@ -110,7 +110,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
-    --with-java \
+    --with-java=/usr/local/openjdk-8 \
     --with-fgdb=/fgdb \
     --with-webp --with-proj=/build${PROJ_INSTALL_PREFIX} \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
@@ -139,7 +139,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mv /build/usr/bin/*.jar               /build_gdal_java/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_java/usr/lib/java3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_java/usr/lib/java/bin/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
