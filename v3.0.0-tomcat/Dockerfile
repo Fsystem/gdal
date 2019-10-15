@@ -110,18 +110,14 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
-    --with-java=/usr/local/openjdk-8 \
-    --with-proj=/build/usr/local \
+    --with-java \
     --with-fgdb=/fgdb \
     --with-webp --with-proj=/build${PROJ_INSTALL_PREFIX} \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     && make -j$(nproc) \
-    && cd swig/java \
-    && make -j$(nproc) \
-    && cd ../.. \
     && make install DESTDIR="/build" \
-    && mv swig/java /build/usr/share/gdal/libso \
+    && mkdir /build/usr/share/gdal/libso \
     && cp /fgdb/lib/*.so /build/usr/share/gdal/libso \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
@@ -134,16 +130,16 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && cd ../.. \
     && rm -rf gdal \
-    && mkdir -p /build_gdal_python/usr/lib \
-    && mkdir -p /build_gdal_python/usr/bin \
+    && mkdir -p /build_gdal_java/usr/lib \
+    && mkdir -p /build_gdal_java/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/java            /build_gdal_java/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
-    && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
+    && mv /build/usr/bin/*.jar               /build_gdal_java/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_java/usr/lib/java3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
@@ -160,7 +156,6 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        python3-numpy libpython3.6 \
         libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
         libcurl4 libexpat1 \
         libxerces-c3.2 \
@@ -180,7 +175,7 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/li
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_python/usr/ /usr/
+COPY --from=builder  /build_gdal_java/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN (for so in \
      /usr/share/gdal/libso/*.so; \
