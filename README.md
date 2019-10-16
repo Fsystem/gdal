@@ -11,10 +11,10 @@ So I switch to Debian based Docker images,  and finally I went throuth it.
 
 ## Version Info
 
-tag | gdal | tomcat | jdk | os | fgdb
-- | - | - | - | - | -
-base | none | 8.5 | open jdk 8 | Alpine 3.39 | none
-base-debian | none | 8.5 | open jdk 8 | Debian 9 | none
-v2.2.0-tomcat | v2.2.0 | 8.5 | open jdk 8 | Alpine 3.39 | none
-base-debian | v3.0.0 | 8.5 | open jdk 8 | Debian 9 | 1.5.1
+| tag | gdal | tomcat | jdk | os | fgdb |
+| - | - | - | - | - | - |
+| base | none | 8.5 | open jdk 8 | Alpine 3.39 | none |
+| base-debian | none | 8.5 | open jdk 8 | Debian 9 | none |
+| v2.2.0-tomcat | v2.2.0 | 8.5 | open jdk 8 | Alpine 3.39 | none |
+| v3.0.0-tomcat | v3.0.0 | 8.5 | open jdk 8 | Debian 9 | 1.5.1 |
 
