@@ -153,9 +153,10 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
-        libcurl4 libexpat1 \
-        libxerces-c3.2 \
+        libjpeg62-turbo libgeos-3.5.1 libgeos-c1v5 \
+        libcurl3 libexpat1 \
+        libxerces-c3.1 \
+        libxerces2-java \
         libwebp6 \
         libzstd1 bash libpq5 libssl1.1
 
