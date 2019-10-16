@@ -179,4 +179,3 @@ RUN (for so in \
      do ln -s $so  /usr/local/tomcat/native-jni-lib/; done)
 
 RUN ldconfig
-CMD gdalinfo --version && gdalinfo --formats && ogrinfo --formats
