@@ -1,5 +1,5 @@
 
-FROM adoptopenjdk:8-openj9-bionic as builder
+FROM adoptopenjdk:8-openj9-bionic 
 
 MAINTAINER haies 
 
