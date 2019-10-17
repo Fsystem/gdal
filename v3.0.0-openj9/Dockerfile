@@ -70,6 +70,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64.tar.gz -O - \
         | tar xz -C /fgdb --strip-components=1 \
     && cd gdal/gdal \
+    && export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
