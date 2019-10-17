@@ -1,5 +1,5 @@
 
-FROM ubuntu:18.04 as builder
+FROM adoptopenjdk:8-openj9-bionic as builder
 
 MAINTAINER haies 
 
