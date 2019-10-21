@@ -129,10 +129,11 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/li
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN (for so in \
      /usr/share/gdal/libso/*.so; \
-     do ln -s $so  /usr/local/tomcat/native-jni-lib/; done)
+     do ln -s $so  /usr/lib/; done)
 
 RUN ldconfig
+
+ENTRYPOINT ["/bin/sh", "-c","for jar in /jars/*.jar; do java -jar $jar; done"]
