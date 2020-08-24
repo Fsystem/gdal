@@ -136,4 +136,4 @@ RUN (for so in \
 
 RUN ldconfig
 
-ENTRYPOINT ["/bin/sh", "-c","for jar in /jars/*.jar; do java -jar $jar; done"]
+ENTRYPOINT ["/bin/sh", "-c","for jar in /jars/*.jar; do java $JAVA_OPTS -jar $jar; done"]
