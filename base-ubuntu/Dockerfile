@@ -11,7 +11,7 @@ RUN apt-get update -y \
             swig ant \
             python3-dev python3-numpy \
             libjpeg-dev libgeos-dev \
-            curl libcurl4-gnutls-dev libexpat-dev libxerces-c-dev \
+            curl libcurl4-gnutls-dev libexpat-dev libxerces-c-dev libtiff-dev \
             libwebp-dev \
             libzstd1-dev bash zip curl \
             libpq-dev libssl-dev \
