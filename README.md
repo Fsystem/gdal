@@ -6,10 +6,7 @@ GDAL Java Tomcat JDK filegdb
 
 for tag `3.9-jdk8` `3.9-jdk17` `3.9-jdk21` `3.9-jdk8` `v3.0.0-openj9`
 
-```
-
-ENTRYPOINT ["/bin/sh", "-c","for jar in /jars/*.jar; do java $JAVA_OPTS -jar $jar; done"]
-```
+`ENTRYPOINT ["/bin/sh", "-c","for jar in /jars/*.jar; do java $JAVA_OPTS -jar $jar; done"]`
 
 ## Introduction
 
