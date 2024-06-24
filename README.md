@@ -19,9 +19,9 @@ So I switch to Debian based Docker images,  and finally I went throuth it.
 
 | tag | gdal | tomcat | jdk | os | fgdb |
 | - | - | - | - | - | - |
-| 3.9-jdk8 | 3.9.0 | none | amazoncrectto jdk8 | Alpine 3.20 | none |
-| 3.9-jdk17 | 3.9.0 | none | amazoncrectto jdk17 | Alpine 3.20 | none |
-| 3.9-jdk21 | 3.9.0 |  none | amazoncrectto jdk21| Alpine 3.20 | none |
+| 3.9-jdk8 | 3.9.0 | none | amazoncorectto jdk8 | Alpine 3.20 | none |
+| 3.9-jdk17 | 3.9.0 | none | amazoncorectto jdk17 | Alpine 3.20 | none |
+| 3.9-jdk21 | 3.9.0 |  none | amazoncorectto jdk21| Alpine 3.20 | none |
 | base | none | 8.5 | open jdk 8 | Alpine 3.3 | none |
 | base-debian | none | 8.5 | open jdk 8 | Debian 9 | none |
 | v2.2.0-tomcat | v2.2.0 | 8.5 | open jdk 8 | Alpine 3.39 | none |
