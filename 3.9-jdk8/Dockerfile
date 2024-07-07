@@ -6,7 +6,7 @@
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG ALPINE_VERSION=3.19
-FROM amazoncorretto:8u412-alpine${ALPINE_VERSION} as builder-jdk
+FROM amazoncorretto:8u412-alpine${ALPINE_VERSION} AS builder-jdk
 
 # Setup build env for PROJ
 RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
@@ -28,7 +28,7 @@ RUN wget -O apache-ant-1.10.14-bin.tar.gz https://downloads.apache.org/ant/binar
     rm -f apache-ant-1.10.14-bin.tar.gz
 
 
-FROM builder-jdk as builder-gdal
+FROM builder-jdk AS builder-gdal
 
 # Build openjpeg
 #ARG OPENJPEG_VERSION=2.3.1
@@ -148,7 +148,7 @@ RUN if test "${RSYNC_REMOTE}" != ""; then \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done 
 
 # Build final image
-FROM amazoncorretto:8u412-alpine${ALPINE_VERSION}-jre as runner
+FROM amazoncorretto:8u412-alpine${ALPINE_VERSION}-jre AS runner
 
 LABEL maintainer="Sean Wan <haies@live.com>"
 
