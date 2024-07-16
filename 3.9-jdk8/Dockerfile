@@ -159,6 +159,7 @@ RUN apk add --no-cache \
         libcurl tiff \
         zlib zstd-libs lz4-libs libdeflate libarchive \
         libjpeg-turbo libpng openjpeg libwebp expat libpq \
+        freetype fontconfig ttf-dejavu \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # Only libwebp.so is used by GDAL
@@ -167,6 +168,8 @@ RUN apk add --no-cache \
 # Order layers starting with less frequently varying ones
 #COPY --from=builder  /build_thirdparty/usr/ /usr/
 
+COPY ./fonts/ /usr/share/fonts/
+RUN fc-cache -fv
 COPY --from=builder-gdal  /build_projgrids/usr/ /usr/
 
 COPY --from=builder-gdal  /build_proj/usr/share/proj/ /usr/share/proj/
